@@ -2,8 +2,13 @@
 <template>
   <div class="content">
     <el-card style="max-width: 480px">
-      <h2 style="text-align: center" v-if="activeIndex==1||activeIndex==2">登录</h2>
-      <h2 style="text-align: center;" v-else>注册</h2>
+      <h2
+        style="text-align: center"
+        v-if="activeIndex == 1 || activeIndex == 2"
+      >
+        登录
+      </h2>
+      <h2 style="text-align: center" v-else>注册</h2>
       <el-menu
         :default-active="activeIndex"
         class="el-menu-demo"
@@ -28,7 +33,7 @@
         <el-form-item prop="password">
           <el-input v-model="AccountForm.password" placeholder="请输入密码" />
         </el-form-item>
-        <el-button size="large">登录</el-button>
+        <el-button size="large" @click="AccountLogin">登录</el-button>
       </el-form>
       <el-form
         v-if="activeIndex == 2"
@@ -55,14 +60,17 @@
         :rules="RegisterRules"
         label-width="auto"
       >
-        <el-form-item prop="username">
-          <el-input v-model="RegisterForm.username" placeholder="请输入用户名" />
+        <el-form-item prop="userName">
+          <el-input
+            v-model="RegisterForm.userName"
+            placeholder="请输入用户名"
+          />
         </el-form-item>
         <el-form-item prop="password">
           <el-input v-model="RegisterForm.password" placeholder="请输入密码" />
         </el-form-item>
-        <el-form-item prop="confirmPassword">
-          <el-input v-model="RegisterForm.confirmPassword" placeholder="确认密码" />
+        <el-form-item prop="rePassword">
+          <el-input v-model="RegisterForm.rePassword" placeholder="确认密码" />
         </el-form-item>
         <el-button @click="submitForm">注册</el-button>
       </el-form>
@@ -88,9 +96,17 @@
 <script setup>
 import { ElMessage } from "element-plus";
 import { reactive, ref } from "vue";
-const RegisterFormRef=ref();
-const PhoneFormRef=ref();
-const AccountFormRef=ref();
+import { RegisterUser } from "@/axios/user";
+import { useRoute } from "vue-router";
+import { useRouter } from "vue-router";
+import axios from "axios";
+const router = useRouter();
+const RegisterFormRef = ref();
+const PhoneFormRef = ref();
+const AccountFormRef = ref();
+const AccountLogin = () => {
+  router.push("/home");
+};
 const activeIndex = ref("2");
 const goRegister = () => {
   activeIndex.value = 3;
@@ -130,13 +146,13 @@ const PhoneRules = reactive({
     { pattern: /^\d{6}$/, message: "验证码必须是六位数字", trigger: "blur" },
   ],
 });
-const RegisterForm=reactive({
-  username:"",
-  password:"",
-  confirmPassword:""
-})
-const RegisterRules=reactive({
-   username: [
+const RegisterForm = reactive({
+  userName: "",
+  password: "",
+  rePassword: "",
+});
+const RegisterRules = reactive({
+  userName: [
     { required: true, message: "账号不能为空", trigger: "blur" },
     { min: 3, max: 10, message: "账号长度在3到10区间", trigger: "blur" },
   ],
@@ -144,32 +160,34 @@ const RegisterRules=reactive({
     { required: true, message: "密码不能为空", trigger: "blur" },
     { min: 3, max: 10, message: "密码长度在3到10区间", trigger: "blur" },
   ],
-  confirmPassword:[
+  rePassword: [
     { required: true, message: "密码不能为空", trigger: "blur" },
     {
-      validator:(rule,value,callback)=>{
-        if(value!==RegisterForm.password){
-          callback(new Error("两次输入密码不一致"))
-        }else{
-          callback()
+      validator: (rule, value, callback) => {
+        if (value !== RegisterForm.password) {
+          callback(new Error("两次输入密码不一致"));
+        } else {
+          callback();
         }
       },
-      trigger:"blur"
-    }
-  ]
-})
-const submitForm=()=>{
-  RegisterFormRef.value.validate((valid)=>{
-    if(valid){
-
-    }else{
-      ElMessage({
-        message:"请填写正确的表单项",
-        type:'error'
+      trigger: "blur",
+    },
+  ],
+});
+const submitForm = () => {
+  RegisterFormRef.value.validate((valid) => {
+    if (valid) {
+      axios.post("/api/user/register",RegisterForm).then(res=>{
+        console.log("注册成功")
       })
+    } else {
+      ElMessage({
+        message: "请填写正确的表单项",
+        type: "error",
+      });
     }
-  })
-}
+  });
+};
 </script>
 <style scoped>
 .content {
