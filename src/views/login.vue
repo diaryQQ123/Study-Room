@@ -28,7 +28,7 @@
         label-width="auto"
       >
         <el-form-item prop="username">
-          <el-input v-model="AccountForm.username" placeholder="请输入用户名" />
+          <el-input v-model="AccountForm.userName" placeholder="请输入用户名" />
         </el-form-item>
         <el-form-item prop="password">
           <el-input v-model="AccountForm.password" placeholder="请输入密码" />
@@ -99,15 +99,29 @@ import { reactive, ref } from "vue";
 import { RegisterUser } from "@/axios/user";
 import { useRoute } from "vue-router";
 import { useRouter } from "vue-router";
+import {useStore} from "vuex"
 import axios from "axios";
 const router = useRouter();
 const RegisterFormRef = ref();
+const store=useStore();
 const PhoneFormRef = ref();
 const AccountFormRef = ref();
 const AccountLogin = () => {
-  router.push("/home");
+  axios.post("/api/user/login",AccountForm).then(res=>{
+    if(res!=null){
+      ElMessage({
+        type:"success",
+        message:"登录成功"
+      })
+      console.log(res.data.data)
+      store.dispatch('saveUser',res.data.data);
+      localStorage.setItem('token',res.data.data.token)
+      console.log(store.state)
+      router.push("/home")
+    }
+  })
 };
-const activeIndex = ref("2");
+const activeIndex = ref("3");
 const goRegister = () => {
   activeIndex.value = 3;
 };
@@ -115,11 +129,11 @@ const handleSelect = (index) => {
   activeIndex.value = index;
 };
 const AccountForm = reactive({
-  username: "",
+  userName: "",
   password: "",
 });
 const AccountRules = reactive({
-  username: [
+  userName: [
     { required: true, message: "账号不能为空", trigger: "blur" },
     { min: 3, max: 10, message: "账号长度在3到10区间", trigger: "blur" },
   ],
@@ -178,8 +192,15 @@ const submitForm = () => {
   RegisterFormRef.value.validate((valid) => {
     if (valid) {
       axios.post("/api/user/register",RegisterForm).then(res=>{
-        console.log("注册成功")
+        activeIndex.value=1,
+        ElMessage({
+          message:"请登录",
+          type:"success"
+        })
       })
+      RegisterForm.password=null,
+      RegisterForm.rePassword=null,
+      RegisterForm.userName=null
     } else {
       ElMessage({
         message: "请填写正确的表单项",
